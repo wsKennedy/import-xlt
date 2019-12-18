@@ -12,10 +12,11 @@ export class AppComponent {
 
   storeData: any;
   csvData: any;
-  jsonData: any;
+  jsonData: any = [];
   textData: any;
   htmlData: any;
   fileUploaded: File;
+  jsonWorkSheet: any = [];
   worksheet: any;
 
   uploadedFile(event) {
@@ -33,7 +34,10 @@ export class AppComponent {
       const bstr = arr.join('');
       const workbook = XLSX.read(bstr, { type: 'binary' });
       const SHEET_NAME: string[] =  workbook.SheetNames;
-      this.worksheet = workbook.Sheets[workbook.SheetNames[0]];
+      this.worksheet = workbook.Sheets[SHEET_NAME[0]];
+      for (let i = 0; i !== SHEET_NAME.length; i++ ) {
+        this.jsonWorkSheet.push( {sheetNames:SHEET_NAME[i] , sheets: workbook.Sheets[SHEET_NAME[i]]});
+      }
     };
     readFile.readAsArrayBuffer(this.fileUploaded);
   }
@@ -45,7 +49,13 @@ export class AppComponent {
   }
 
   readAsJson() {
-    this.jsonData = XLSX.utils.sheet_to_json(this.worksheet, { raw: false });
+
+    for(let i = 0; i !== this.jsonWorkSheet.length; i++ ) {
+      this.jsonData.push( {
+        sheetNames: this.jsonWorkSheet[i].sheetNames,
+        sheets:  XLSX.utils.sheet_to_json(this.jsonWorkSheet[i].sheets, { raw: false })
+      });
+    }
     this.jsonData = JSON.stringify(this.jsonData);
     const data: Blob = new Blob([this.jsonData], { type: 'application/json' });
     FileSaver.saveAs(data, 'JsonFile' + new Date().getTime() + '.json');
